@@ -36,14 +36,14 @@ class MerkleTree:
         return self._root, self._root.data
 
     def _utilGenerateTree(self, posLeft: int, posRight: int):
-        # if we are at a leaf
-        # print('left ' + str(posLeft) + ' right ' + str(posRight))
 
+        # print('left ' + str(posLeft) + ' right ' + str(posRight))
         if int(posLeft) == int(posRight):
+            # if we are at a leaf
             node = Tree()
-            node.data = str(self._txList[int(posLeft)])
+            node.data = str(ECC.hash(str(self._txList[int(posLeft)])))
             # print(' leaf data ' + node.data + ' hash ' + ECC.hash(node.data))
-            return node, str(ECC.hash(node.data))
+            return node, node.data
 
         centerElement = int((posLeft + posRight) / 2)
         root = Tree()
@@ -78,25 +78,30 @@ class MerkleTree:
 
         if not isinstance(self._root, Tree):
             print('invalid root passed')
+            return
         self._utilpostOrderPrintTree(self._root)
 
-    def _utilGetMembershipProof(self, root, data):
+    def _utilGetMembershipProof(self, root, path, data):
 
-        if root is None:
-            return
+        if not root:
+            return False
 
-        self._utilGetMembershipProof(root.left, data)
-        self._utilGetMembershipProof(root.right, data)
-
+        path.append(root.data)
         if root.data == data:
-            print('found')
-            return data
-        else:
-            print(' at %s' % (root.data))
+            return True
+        if self._utilGetMembershipProof(root.left, path, data) or self._utilGetMembershipProof(root.right, path, data):
+            return True
+        path.pop(-1)
+
+        return False
 
     def getMembershipProof(self, data):
 
         if self._root is None:
             return
-
-        self._utilGetMembershipProof(self._root, data)
+        # path from root to the node which contains the data.
+        path = []
+        if self._utilGetMembershipProof(self._root, path, data):
+            return path
+        else:
+            return None

@@ -28,8 +28,6 @@ def simpleHash(txt, n):
     return z+1
 
 hash = lambda x: hashlib.md5(x.encode('utf-8')).hexdigest()
-#hash = lambda x: hashlib.md5(x).hexdigest()
-
 #extended greatest common denominator
 
 def egcd(a, b):
