@@ -81,17 +81,43 @@ class MerkleTree:
             return
         self._utilpostOrderPrintTree(self._root)
 
-    def _utilGetMembershipProof(self, root, path, data):
+    def _utilGetMembershipProof(self, root, path, data, level):
 
         if not root:
             return False
 
-        path.append(root.data)
+        end_marker = 'end'
+
+        level += 1
+        path[level] = [root.data, root.left.data if root.left is not None else end_marker,
+                       root.right.data if root.right is not None else end_marker]
         if root.data == data:
+            # we have found the data, now post process the path to generate all needed branches
+            # revalidate to make sure
+
+            #print('final path so far', path)
+
+            if path[level][1] != end_marker:
+                return False
+
+            #level -= 1
+            #data_list = path[level]
+            #print('patching level data ', data_list)
+            #data_list[data_list.index(data)] = 'hash of data'
+            #print('patching level data now', data_list)
+            for l in reversed(range(1, level)):
+                #print('patching level ', l)
+                data_list = path[l]
+                root_of_current_level = data_list[0]
+                new_data = [data_list[1], data_list[2]]
+                # replace node from above level while value matches with root_of_current_level value
+                data_list_above = path[l-1]
+                data_list_above[data_list_above.index(root_of_current_level)] = new_data
+
             return True
-        if self._utilGetMembershipProof(root.left, path, data) or self._utilGetMembershipProof(root.right, path, data):
+        if self._utilGetMembershipProof(root.left, path, data, level) or self._utilGetMembershipProof(root.right, path,
+                                                                                                      data, level):
             return True
-        path.pop(-1)
 
         return False
 
@@ -100,8 +126,10 @@ class MerkleTree:
         if self._root is None:
             return
         # path from root to the node which contains the data.
-        path = []
-        if self._utilGetMembershipProof(self._root, path, data):
-            return path
+        path = {}
+        if self._utilGetMembershipProof(self._root, path, data, -1):
+            processed_path = path.get(0)
+            #print('final path patched', processed_path)
+            return processed_path
         else:
             return None
