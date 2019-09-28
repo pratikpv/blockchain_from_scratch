@@ -1,8 +1,20 @@
+# CS266: Fall 2019
+# HW1
+#
+# Pratik Prajapati
+# Ashraf Saber
+#
+
 import MerkleTree
 import ECC
 
 
 class Block:
+    """
+    This class represents the block, with prevHash, merkleTree and nonce
+    nonce would be mined by calling mineBlock() method.
+    preset variable in isHashInTarget represents numver of binary digits to be zero for the target hash.
+    """
 
     def __init__(self, prevHash: str, merkleTree: MerkleTree):
         self._prevHash = prevHash
@@ -10,7 +22,9 @@ class Block:
         self._nonce = None
 
     def getMerkleTree(self):
-        """ get Hash of current block """
+        """
+        get Hash of current block
+        """
         if not isinstance(self._merkleTree, MerkleTree.MerkleTree):
             return None
 
@@ -23,20 +37,12 @@ class Block:
         return self._nonce
 
     def isHashInTarget(self, hash):
-        """The first 16 (binary) digits of each block hash must be 0."""
+        """
+        The first 16 (binary) digits of each block hash must be 0.
+        """
         preset = 16
         # devide preset by 4 as each hex number represents 4 bits
         numOfZero = int(preset / 4)
-
-        # method 1
-        # intHash = int(hash, 16);
-        # print(' hex = %s int = %d ' % (hash, intHash))
-        # if int(intHash) >> (int.bit_length(intHash) - preset):
-        #    return False
-        # else:
-        # return True
-
-        # method 2
 
         if str(hash).startswith('0' * numOfZero):
             return True
@@ -54,19 +60,14 @@ class Block:
                 self._nonce += 1
 
             # print values every 10x nonce tried, for debugging only
-            if not (self._nonce % 1000000):
-                print('newHash = %s nonce = %d ' % (newHash, self._nonce))
+            # if not (self._nonce % 1000000):
+            #    print('newHash = %s nonce = %d ' % (newHash, self._nonce))
 
     def printBlock(self):
         print('prevHash = %s merkleTree-root = %s nonce = %d' % (
             self.getPrevHash(), self.getMerkleTree().getRootHash(), self.getNonce()))
 
-    def validateBlock(self, hash):
-
-        """ TODO how to really validate a block ? """
-        newHash = ECC.hash(str(self.getNonce()) + str(hash))
-        if self.isHashInTarget(newHash):
-            return True, newHash
-
-        # return False with invalid hash
-        return False, -1
+    def getProof(self, data):
+        # get membership proof of the data in the merkle tree
+        path = self._merkleTree.getMembershipProof(data)
+        return path
