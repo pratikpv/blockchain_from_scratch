@@ -103,6 +103,7 @@ class MerkleTree:
         level += 1
         path[level] = [root.data, root.left.data if root.left is not None else end_marker,
                        root.right.data if root.right is not None else end_marker]
+
         if root.data == data:
             # we have found the data, now post process the path to generate all needed branches
             # re-validate to make sure
@@ -144,7 +145,7 @@ class MerkleTree:
         :return: list of the list for the merkle tree proof. sub list represents the sub tree
         """
         if self._root is None:
-            return
+            return None
         # path from root to the node which contains the data.
         path = {}
         if self._utilGetMembershipProof(self._root, path, data, -1):
@@ -182,3 +183,59 @@ class MerkleTree:
         path = data_path[:]
         reduced_path = [path[0], self._reduce(path.pop(0))]
         return True if reduced_path[0] == reduced_path[1] else False
+
+    def _utilgetLabledProof(self, lst: list, final_op, data):
+
+        for x in range(len(lst)):
+            if isinstance(lst[x], list):
+                if x % 2:
+                    return ' right = [' + self._utilgetLabledProof(lst[x], final_op, data) + ']'
+                else:
+                    return ' left = [' + self._utilgetLabledProof(lst[x], final_op, data) + ']'
+            else:
+                if x % 2:
+                    print('at right ' + str(lst[x]))
+                    final_op += ' right = [' + str(lst[x]) + ']'
+                else:
+                    print('at left ' + str(lst[x]))
+                    final_op += ' left = [' + str(lst[x]) + ']'
+        return final_op
+
+    def getLabledProof(self, data):
+        data_proof = self.getMembershipProof(data)
+        if data_proof is None:
+            return None
+
+        data_proof_temp = data_proof[1:]
+        final_op = ''
+        final_op = self._utilgetLabledProof(data_proof_temp, final_op, data)
+        final_op = 'root = ' + str(data_proof[0]) + final_op
+        # print(final_op)
+        return final_op
+
+    def _utilprintLabeledProof(self, lst: list):
+        y = ''
+        for x in range(len(lst)):
+            if x == 0:
+                y = 'left= '
+            elif x == 1:
+                y = 'right= '
+            if type(lst[x]) == list:
+                y += str(lst[x])
+                print(str(y))
+                y = ""
+                self._utilprintLabeledProof(lst[x])
+            else:
+                print(str(y) + str(lst[x]))
+                y += str(lst[x])
+                y = ''
+
+        return y
+
+    def printLabeledProof(self, data):
+        path = self.getMembershipProof(data)
+        if path is None:
+            return None
+        path.pop(0)
+        y = self._utilprintLabeledProof(path)
+        return y

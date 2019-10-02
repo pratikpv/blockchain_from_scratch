@@ -20,6 +20,7 @@ blockchain = []
 
 # line len for pretty printing
 LINE_LEN = 100
+current_top_hash = ''
 
 
 def mineGenesisBlock():
@@ -45,7 +46,8 @@ def run_blockchain(genesisHash: str):
     :param genesisHash: has of The Genesis Block
     :return: None
     """
-    prevHash = genesisHash
+    global current_top_hash
+    current_top_hash = genesisHash
     DS = DataSimulator()
 
     #
@@ -91,12 +93,12 @@ def run_blockchain(genesisHash: str):
             m.generateTree()
 
             # Create a block object with the merkle tree
-            b = blk.Block(prevHash, m)
+            b = blk.Block(current_top_hash, m)
             # mineBlock returns hash of current block. this hash becomes prevHash for the next block
-            prevHash = b.mineBlock()
+            current_top_hash = b.mineBlock()
 
             if debug:
-                print('blockHash = ', prevHash, end=' ')
+                print('blockHash = ', current_top_hash, end=' ')
 
             b.printBlock()
             print('-' * LINE_LEN)
@@ -117,8 +119,9 @@ def prove_data_membership(input_data: str):
     - traverse the blockchain to find the block which has the data.
 
     :param input_data: a msg string to lookup
-    :return: a Tuple of blockchain_proof, merkle_tree_proof from the block which has the data, data_tuple which is (msg, pk, signature)
-            a tuple of (None, None, None) is return is data is not found.
+    :return: a Tuple of blockchain_proof, merkle_tree_proof from the block which has the data, data_tuple
+             which is (msg, pk, signature)
+             a tuple of (None, None, None) is return is data is not found.
     """
     # find data from allValidTxList that we have processed
     try:
@@ -136,9 +139,9 @@ def prove_data_membership(input_data: str):
         merkle_tree_proof = block.getProof(hash_of_data_tuple)
         if merkle_tree_proof is not None:
             # found the data
-            return blockchain_proof, merkle_tree_proof, data_tuple
+            return blockchain_proof, block.getMerkleTree(), data_tuple, hash_of_data_tuple
 
-    return None, None, None
+    return None, None, None, None
 
 
 if __name__ == "__main__":
@@ -168,20 +171,27 @@ if __name__ == "__main__":
 
     # check with good data, this is supposed to pass
     input_data = 'cabinet meets to balance budget priorities'
-    blockchain_proof, merkle_tree_proof, data_tuple = prove_data_membership(input_data)
+    blockchain_proof, merkle_tree, data_tuple, hash_of_data_tuple = prove_data_membership(input_data)
     if blockchain_proof is None:
         print('Input data = %s not in blockchain' % (input_data))
     else:
         print('Input data is in blockchain. The proof is:')
         print('=' * LINE_LEN)
-        print('The Blockchain: ')
+        print('The Blockchain: (hash of latest block ' + current_top_hash + ')')
         for b in range(len(blockchain_proof)):
             blockchain_proof[b].printBlock()
         print('=' * LINE_LEN)
+        merkle_tree_proof = merkle_tree.getMembershipProof(hash_of_data_tuple)
         print('The Merkle Tree:\n' + str(merkle_tree_proof))
+        print('-' * LINE_LEN)
+        print('The Merkle Tree lables:')
+        print('root : ' + str(merkle_tree_proof[0]))
+        merkle_tree.printLabeledProof(hash_of_data_tuple)
         # print('data_tuple : ' + str(data_tuple[0]))
         print('=' * LINE_LEN)
-        print('data passed : ' + input_data)
+        # print('data passed by user: ' + input_data)
+        print('hash of data in merkle tree: ' + hash_of_data_tuple + ', which can be re-created by '
+                                                                     'hash(input_data || pk || signature)')
         print('pk : ' + str(data_tuple[1]))
         print('signature : ' + str(data_tuple[2]))
         print('=' * LINE_LEN)

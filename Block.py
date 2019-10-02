@@ -36,6 +36,9 @@ class Block:
     def getNonce(self):
         return self._nonce
 
+    def getMerkleTree(self):
+        return self._merkleTree
+
     def isHashInTarget(self, hash):
         """
         The first 16 (binary) digits of each block hash must be 0.
@@ -58,10 +61,6 @@ class Block:
                 return newHash
             else:
                 self._nonce += 1
-
-            # print values every 10x nonce tried, for debugging only
-            # if not (self._nonce % 1000000):
-            #    print('newHash = %s nonce = %d ' % (newHash, self._nonce))
 
     def printBlock(self):
         print('prevHash = %s merkleTree-root = %s nonce = %d' % (

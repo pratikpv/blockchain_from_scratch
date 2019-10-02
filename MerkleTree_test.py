@@ -17,7 +17,7 @@ m = mtree.MerkleTree(data_list)
 m.generateTree()
 m.postOrderPrintTree()
 # print(m.getRootHash())
-data = ECC.hash('a')
+data = ECC.hash('f')
 path = m.getMembershipProof(data)
 
 if path is not None:
@@ -30,3 +30,5 @@ if isValid:
     print('membership path is valid')
 else:
     print('membership path is not valid')
+
+print('labled proof ' + m.getLabledProof(data))
